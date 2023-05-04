@@ -5,9 +5,14 @@ using namespace std;
 
 class Figure {
 public:
-    Figure(int x, int y) : _x(x), _y(y) {
-        _hwnd = nullptr;
+    class FigureException {
+    public:
+        string message;
 
+        FigureException(string message) : message(message) {}
+    };
+
+    Figure(int x, int y) : _x(x), _y(y) {
         if ((_hwnd = GetConsoleWindow()) == nullptr) {
             throw FigureException("Console window not found");
         }
@@ -17,6 +22,7 @@ public:
 
         GetWindowRect(_hwnd, &_rect);
     }
+
     ~Figure() {
         ReleaseDC(_hwnd, _hdc);
     }
@@ -36,12 +42,6 @@ protected:
     HDC _hdc;
     RECT _rect;
 
-    class FigureException {
-    public:
-        string message;
-
-        FigureException(string message) : message(message) {}
-    };
 };
 
 class MyRectangle : public Figure {
@@ -51,8 +51,8 @@ public:
     void show() override {
         HPEN pen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
         SelectObject(_hdc, pen);
-        Rectangle(_hdc, 0, 0, 50, 50);
-        //DeleteObject(pen);
+        Rectangle(_hdc, _x, _y, _x + _size, _y + _size);
+        DeleteObject(pen);
     }
 
     void hide() override {
