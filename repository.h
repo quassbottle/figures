@@ -17,35 +17,21 @@ public:
     }
 
     void showAll() {
-        if (_stack.empty()) {
-            return;
-        }
-        Figure* x = _stack.top();
-
-        x->show();
-
-        _stack.pop();
-        showAll();
-        _stack.push(x);
+        traverse([] (Figure*& f) { f->show(); });
     }
 
     void hideAll() {
-        if (_stack.empty()) {
-            return;
-        }
-        Figure* x = _stack.top();
+        traverse([] (Figure*& f) { f->hide(); });
+    }
 
-        x->hide();
-
-        _stack.pop();
-        showAll();
-        _stack.push(x);
+    void destroy() {
+        while (!_stack.empty()) _stack.pop();
     }
 
 private:
     stack<Figure*, vector<Figure*>> _stack;
 
-    void traverse(void (*action)(Figure* f)) {
+    void traverse(void (*action)(Figure*&)) {
         if (_stack.empty()) {
             return;
         }

@@ -62,3 +62,64 @@ public:
 protected:
     int _size;
 };
+
+class Triangle : Figure {
+public:
+    Triangle(int x, int y, int size, bool upsideDown = false) : Figure(x, y), _size(size) {
+        if (upsideDown) {
+            a = {x, y};
+            b = {x + size, y};
+            c = {x + size / 2, y + size};
+        }
+        else {
+            a = {x + size / 2, y};
+            b = {x, y + size };
+            c = {x + size, y + size};
+        }
+    }
+
+    void show() override {
+
+    }
+
+    void hide() override {
+
+    }
+
+    POINT getA() {
+        return a;
+    }
+
+    POINT getB() {
+        return b;
+    }
+
+    POINT getC() {
+        return c;
+    }
+
+protected:
+    int _size;
+
+    POINT a, b, c;
+};
+
+class Serpinsky : Figure {
+    Serpinsky(int x, int y, int size) : Figure(x, y), _size(size) {
+        mainTriangle = new Triangle(x, y, size);
+
+    }
+
+    void show() override {
+
+    }
+
+    void hide() override {
+
+    }
+protected:
+    Triangle* centerTriangle;
+    Triangle* mainTriangle;
+
+    int _size;
+};
