@@ -5,10 +5,10 @@
 class FigureRepository {
 public:
     FigureRepository() {
-        _stack = stack<Figure*, vector<Figure*>>();
+        _stack = stack<IFigure*, vector<IFigure*>>();
     }
 
-    void push(Figure* figure) {
+    void push(IFigure* figure) {
         _stack.push(figure);
     }
 
@@ -17,11 +17,11 @@ public:
     }
 
     void showAll() {
-        traverse([] (Figure*& f) { f->show(); });
+        traverse([] (IFigure*& f) { f->show(); });
     }
 
     void hideAll() {
-        traverse([] (Figure*& f) { f->hide(); });
+        traverse([] (IFigure*& f) { f->hide(); });
     }
 
     void destroy() {
@@ -29,18 +29,18 @@ public:
     }
 
 private:
-    stack<Figure*, vector<Figure*>> _stack;
+    stack<IFigure*, vector<IFigure*>> _stack;
 
-    void traverse(void (*action)(Figure*&)) {
+    void traverse(void (*action)(IFigure*&)) {
         if (_stack.empty()) {
             return;
         }
-        Figure* x = _stack.top();
+        IFigure* figure = _stack.top();
 
-        action(x);
+        action(figure);
 
         _stack.pop();
         showAll();
-        _stack.push(x);
+        _stack.push(figure);
     }
 };

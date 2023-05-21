@@ -3,16 +3,35 @@
 
 using namespace std;
 
-class Figure {
+class FigureException : std::exception {
 public:
-    class FigureException {
-    public:
-        string message;
+    string message;
 
-        FigureException(string message) : message(message) {}
-    };
+    FigureException(string message) : message(message) {}
+};
 
-    Figure(int x, int y) : _x(x), _y(y) {
+class IDrawable {
+public:
+    virtual void draw() = 0;
+    virtual void erase() = 0;
+};
+
+class IColored {
+public:
+    virtual COLORREF& getBorderColor() = 0;
+    virtual COLORREF& getFillColor() = 0;
+};
+
+class IFigure {
+public:
+    virtual void moveTo(int x, int y) = 0;
+    virtual void show() = 0;
+    virtual void hide() = 0;
+};
+
+class Figure : public IDrawable, public IColored, public IFigure {
+public:
+    Figure(int x, int y, COLORREF border, COLORREF fill) : _x(x), _y(y), _border(border), _fill(fill) {
         if ((_hwnd = GetConsoleWindow()) == nullptr) {
             throw FigureException("Console window not found");
         }
@@ -27,13 +46,26 @@ public:
         ReleaseDC(_hwnd, _hdc);
     }
 
-    virtual void show() = 0;
-    virtual void hide() = 0;
-
-    void moveTo(int x, int y) {
-        hide();
+    virtual void moveTo(int x, int y) {
+        erase();
         _x = x, _y = y;
-        show();
+        draw();
+    }
+
+    virtual void show() {
+        draw();
+    }
+
+    virtual void hide() {
+        erase();
+    }
+
+    COLORREF& getBorderColor() {
+        return _border;
+    }
+
+    COLORREF& getFillColor() {
+        return _fill;
     }
 
 protected:
@@ -41,85 +73,84 @@ protected:
     HWND _hwnd;
     HDC _hdc;
     RECT _rect;
-
+    COLORREF _border;
+    COLORREF _fill;
 };
 
-class MyRectangle : public Figure {
+class Triangle : public Figure {
 public:
-    MyRectangle(int x, int y, int size) : Figure(x, y), _size(size) {}
-
-    void show() override {
-        HPEN pen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
-        SelectObject(_hdc, pen);
-        Rectangle(_hdc, _x, _y, _x + _size, _y + _size);
-        DeleteObject(pen);
+    Triangle(int x, int y, int size, bool isUpsideDown = false,
+             COLORREF border = RGB(255, 255, 255),
+             COLORREF fill = RGB(12, 12, 12)) : Figure(x, y, border, fill), _size(size), _isUpsideDown(isUpsideDown) {
+        setupPoints();
     }
 
-    void hide() override {
+    void draw() override {
+        HPEN pen = CreatePen(PS_SOLID, 1, _border);
+        HBRUSH brush = CreateSolidBrush(_fill);
+        SelectObject(_hdc, pen);
+        SelectObject(_hdc, brush);
+        POINT points[] = {a, b, c};
+        Polygon(_hdc, points, 3);
+        DeleteObject(pen);
+        DeleteObject(brush);
+    }
 
+    void erase() override {
+        RECT* erase = new RECT;
+        erase->top = _y;
+        erase->left = _x;
+        erase->right = _x + _size;
+        erase->bottom = _y + _size;
+
+        InvalidateRect(_hwnd, erase, true);
+
+        delete erase;
+    }
+
+    void moveTo(int x, int y) override {
+        setupPoints();
+        Figure::moveTo(x, y);
     }
 
 protected:
     int _size;
-};
+    bool _isUpsideDown;
+    POINT a, b, c;
 
-class Triangle : Figure {
-public:
-    Triangle(int x, int y, int size, bool upsideDown = false) : Figure(x, y), _size(size) {
-        if (upsideDown) {
-            a = {x, y};
-            b = {x + size, y};
-            c = {x + size / 2, y + size};
+    void setupPoints() {
+        if (_isUpsideDown) {
+            a = {_x, _y};
+            b = {_x + _size, _y};
+            c = {_x + _size / 2, _y + _size};
         }
         else {
-            a = {x + size / 2, y};
-            b = {x, y + size };
-            c = {x + size, y + size};
+            a = {_x + _size / 2, _y};
+            b = {_x, _y + _size };
+            c = {_x + _size, _y + _size};
         }
     }
-
-    void show() override {
-
-    }
-
-    void hide() override {
-
-    }
-
-    POINT getA() {
-        return a;
-    }
-
-    POINT getB() {
-        return b;
-    }
-
-    POINT getC() {
-        return c;
-    }
-
-protected:
-    int _size;
-
-    POINT a, b, c;
 };
 
-class Serpinsky : Figure {
-    Serpinsky(int x, int y, int size) : Figure(x, y), _size(size) {
-        mainTriangle = new Triangle(x, y, size);
+class CompositionFigure : public IFigure {
+public:
+    CompositionFigure(Figure* main, Figure* center) : _main(main), _center(center) {}
 
+    void show() {
+        _main->draw();
+        _center->draw();
     }
 
-    void show() override {
-
+    void hide() {
+        _main->erase();
+        _center->erase();
     }
 
-    void hide() override {
-
+    void moveTo(int x, int y) {
+        _main->moveTo(x, y);
+        _center->moveTo(x, y);
     }
-protected:
-    Triangle* centerTriangle;
-    Triangle* mainTriangle;
-
-    int _size;
+private:
+    Figure* _main;
+    Figure* _center;
 };
