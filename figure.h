@@ -1,6 +1,9 @@
 #include <windows.h>
 #include <iostream>
 
+const COLORREF BG = RGB(12, 12, 12);
+const COLORREF FG = RGB(255, 255, 255);
+
 using namespace std;
 
 class FigureException : std::exception {
@@ -84,32 +87,25 @@ protected:
 class Triangle : public Figure {
 public:
     Triangle(int x, int y, int size, bool isUpsideDown = false,
-             COLORREF border = RGB(255, 255, 255),
-             COLORREF fill = RGB(12, 12, 12)) : Figure(x, y, border, fill), _size(size), _isUpsideDown(isUpsideDown) {
+             COLORREF border = FG,
+             COLORREF fill = BG) : Figure(x, y, border, fill), _size(size), _isUpsideDown(isUpsideDown) {
         setupPoints();
     }
 
     void draw() override {
-        HPEN pen = CreatePen(PS_SOLID, 2, _border);
-        HBRUSH brush = CreateSolidBrush(_fill);
-        SelectObject(_hdc, pen);
-        SelectObject(_hdc, brush);
-        POINT points[] = {a, b, c};
-        Polygon(_hdc, points, 3);
-        DeleteObject(pen);
-        DeleteObject(brush);
+        drawPoints(a, b, c, _fill, _border);
     }
 
     void erase() override {
-        RECT* erase = new RECT;
+        /*RECT* erase = new RECT;
         erase->top = _y;
         erase->left = _x;
         erase->right = _x + _size;
         erase->bottom = _y + _size;
 
-        InvalidateRect(_hwnd, erase, false);
+        InvalidateRect(_hwnd, erase, false);*/
 
-        delete erase;
+        drawPoints(a, b, c, BG, BG);
     }
 
     void moveTo(int x, int y) override {
@@ -129,6 +125,17 @@ protected:
     int _size;
     bool _isUpsideDown;
     POINT a, b, c;
+
+    void drawPoints(POINT a, POINT b, POINT c, COLORREF bg, COLORREF fg) {
+        HPEN pen = CreatePen(PS_SOLID, 2, fg);
+        HBRUSH brush = CreateSolidBrush(bg);
+        SelectObject(_hdc, brush);
+        SelectObject(_hdc, pen);
+        POINT points[] = {a, b, c};
+        Polygon(_hdc, points, 3);
+        DeleteObject(pen);
+        DeleteObject(brush);
+    }
 
     void setupPoints() {
         if (_isUpsideDown) {
@@ -155,6 +162,7 @@ public:
 
     void hide() {
         _main->erase();
+        _center->erase();
     }
 
     void moveTo(int x, int y) {

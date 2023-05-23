@@ -40,7 +40,7 @@ private:
         action(figure);
 
         _stack.pop();
-        showAll();
+        traverse(action);
         _stack.push(figure);
     }
 };
