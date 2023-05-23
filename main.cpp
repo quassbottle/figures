@@ -1,8 +1,6 @@
 #include <iostream>
 #include "repository.h"
 
-
-
 int main() {
     SetConsoleTitle("22VP1_Presnyakov_V15");
 
@@ -15,17 +13,26 @@ int main() {
     auto main = new Triangle(x, y, size);
     auto center = new Triangle(x + (size / 4), y + (size / 2), size / 2, true);
 
-    auto compose = new CompositionFigure(main, center);
+    auto extra = new Triangle(x + 150, y, size * 2, false, RGB(255, 0, 0), RGB(128, 0, 0));
+    auto complex = new Serpinsky(main, center);
 
-    //repo.push(center);
-    //repo.push(compose);
+    repo.push(complex);
+    repo.push(extra);
 
-    float delta = 0;
-    while(true) {
-        compose->show();
-        compose->moveTo(x + (int)delta, y + (int)delta);
-        //delta+= 0.01;
+    for(int i = 0; i < 100; i++) {
+        try {
+            repo.showAll();
+        }
+        catch (FigureException& ex) {
+            system("cls");
+            cout << ex.message;
+        }
     }
+
+    Sleep(1000);
+    repo.hideAll();
+
+    while (true);
 
     system("pause");
 }

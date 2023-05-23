@@ -46,7 +46,11 @@ public:
         ReleaseDC(_hwnd, _hdc);
     }
 
-    virtual void moveTo(int x, int y) {
+    virtual void moveTo(int x, int y) {/*
+        int windowWidth = _rect.right - _rect.left;
+        int windowHeight = _rect.bottom - _rect.top;
+        if (x > windowWidth|| x < 0 || y > windowHeight || y < 0)
+            throw FigureException("Figure is out of border");*/
         erase();
         _x = x, _y = y;
         draw();
@@ -86,7 +90,7 @@ public:
     }
 
     void draw() override {
-        HPEN pen = CreatePen(PS_SOLID, 1, _border);
+        HPEN pen = CreatePen(PS_SOLID, 2, _border);
         HBRUSH brush = CreateSolidBrush(_fill);
         SelectObject(_hdc, pen);
         SelectObject(_hdc, brush);
@@ -103,14 +107,22 @@ public:
         erase->right = _x + _size;
         erase->bottom = _y + _size;
 
-        InvalidateRect(_hwnd, erase, true);
+        InvalidateRect(_hwnd, erase, false);
 
         delete erase;
     }
 
     void moveTo(int x, int y) override {
+        int windowWidth = _rect.right - _rect.left;
+        int windowHeight = _rect.bottom - _rect.top;
+        if (x > windowWidth || x < 0 || y > windowHeight || y < 0)
+            throw FigureException("Figure is out of border");
         setupPoints();
         Figure::moveTo(x, y);
+    }
+
+    int getSize() {
+        return _size;
     }
 
 protected:
@@ -132,9 +144,9 @@ protected:
     }
 };
 
-class CompositionFigure : public IFigure {
+class Serpinsky : public IFigure {
 public:
-    CompositionFigure(Figure* main, Figure* center) : _main(main), _center(center) {}
+    Serpinsky(Triangle* main, Triangle* center) : _main(main), _center(center) {}
 
     void show() {
         _main->draw();
@@ -143,14 +155,14 @@ public:
 
     void hide() {
         _main->erase();
-        _center->erase();
     }
 
     void moveTo(int x, int y) {
         _main->moveTo(x, y);
-        _center->moveTo(x, y);
+        _center->moveTo(x + (_main->getSize() / 4), y + (_main->getSize() / 2));
     }
+
 private:
-    Figure* _main;
-    Figure* _center;
+    Triangle* _main;
+    Triangle* _center;
 };
