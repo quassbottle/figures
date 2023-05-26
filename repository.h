@@ -24,8 +24,12 @@ public:
         traverse([] (IFigure*& f) { f->hide(); });
     }
 
-    void destroy() {
+    void clear() {
         while (!_stack.empty()) _stack.pop();
+    }
+
+    bool empty() {
+        return _stack.empty();
     }
 
 private:

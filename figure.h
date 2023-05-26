@@ -13,18 +13,6 @@ public:
     FigureException(string message) : message(message) {}
 };
 
-class IDrawable {
-public:
-    virtual void draw() = 0;
-    virtual void erase() = 0;
-};
-
-class IColored {
-public:
-    virtual COLORREF& getBorderColor() = 0;
-    virtual COLORREF& getFillColor() = 0;
-};
-
 class IFigure {
 public:
     virtual void moveTo(int x, int y) = 0;
@@ -32,7 +20,7 @@ public:
     virtual void hide() = 0;
 };
 
-class Figure : public IDrawable, public IColored, public IFigure {
+class Figure : public IFigure {
 public:
     Figure(int x, int y, COLORREF border, COLORREF fill) : _x(x), _y(y), _border(border), _fill(fill) {
         if ((_hwnd = GetConsoleWindow()) == nullptr) {
@@ -49,30 +37,22 @@ public:
         ReleaseDC(_hwnd, _hdc);
     }
 
-    virtual void moveTo(int x, int y) {/*
+    virtual void moveTo(int x, int y) {
         int windowWidth = _rect.right - _rect.left;
         int windowHeight = _rect.bottom - _rect.top;
         if (x > windowWidth|| x < 0 || y > windowHeight || y < 0)
-            throw FigureException("Figure is out of border");*/
-        erase();
+            throw FigureException("Figure is out of border");
+        show();
         _x = x, _y = y;
-        draw();
+        hide();
     }
 
-    virtual void show() {
-        draw();
+    int getX() {
+        return _x;
     }
 
-    virtual void hide() {
-        erase();
-    }
-
-    COLORREF& getBorderColor() {
-        return _border;
-    }
-
-    COLORREF& getFillColor() {
-        return _fill;
+    int getY() {
+        return _y;
     }
 
 protected:
@@ -92,11 +72,11 @@ public:
         setupPoints();
     }
 
-    void draw() override {
+    void show() override {
         drawPoints(a, b, c, _fill, _border);
     }
 
-    void erase() override {
+    void hide() override {
         /*RECT* erase = new RECT;
         erase->top = _y;
         erase->left = _x;
@@ -119,6 +99,10 @@ public:
 
     int getSize() {
         return _size;
+    }
+
+    bool isUpsideDown() {
+        return _isUpsideDown;
     }
 
 protected:
@@ -153,16 +137,23 @@ protected:
 
 class Serpinsky : public IFigure {
 public:
-    Serpinsky(Triangle* main, Triangle* center) : _main(main), _center(center) {}
+    Serpinsky(Triangle* main, Triangle* center) : _main(main), _center(center) {
+        if (center->getX() != main->getX() + (main->getSize() / 4) ||
+            center->getY() != main->getY() + (main->getSize() / 2) ||
+            main->getSize() == center->getSize() / 2 ||
+            !center->isUpsideDown()) {
+            throw FigureException("Wrong center triangle");
+        }
+    }
 
     void show() {
-        _main->draw();
-        _center->draw();
+        _main->show();
+        _center->show();
     }
 
     void hide() {
-        _main->erase();
-        _center->erase();
+        _main->hide();
+        _center->hide();
     }
 
     void moveTo(int x, int y) {
