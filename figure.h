@@ -6,12 +6,7 @@ const COLORREF FG = RGB(255, 255, 255);
 
 using namespace std;
 
-class FigureException : std::exception {
-public:
-    string message;
 
-    FigureException(string message) : message(message) {}
-};
 
 class IFigure {
 public:
@@ -22,6 +17,13 @@ public:
 
 class Figure : public IFigure {
 public:
+    class FigureException : std::exception {
+    public:
+        string message;
+
+        FigureException(string message) : message(message) {}
+    };
+
     Figure(int x, int y, COLORREF border, COLORREF fill) : _x(x), _y(y), _border(border), _fill(fill) {
         if ((_hwnd = GetConsoleWindow()) == nullptr) {
             throw FigureException("Console window not found");
@@ -32,6 +34,9 @@ public:
 
         GetWindowRect(_hwnd, &_rect);
     }
+
+    virtual void show() = 0;
+    virtual void hide() = 0;
 
     ~Figure() {
         ReleaseDC(_hwnd, _hdc);
@@ -73,7 +78,7 @@ public:
     }
 
     void show() override {
-        drawPoints(a, b, c, _fill, _border);
+        drawPoints(_a, _b, _c, _fill, _border);
     }
 
     void hide() override {
@@ -85,7 +90,7 @@ public:
 
         InvalidateRect(_hwnd, erase, false);*/
 
-        drawPoints(a, b, c, BG, BG);
+        drawPoints(_a, _b, _c, BG, BG);
     }
 
     void moveTo(int x, int y) override {
@@ -108,7 +113,7 @@ public:
 protected:
     int _size;
     bool _isUpsideDown;
-    POINT a, b, c;
+    POINT _a, _b, _c;
 
     void drawPoints(POINT a, POINT b, POINT c, COLORREF bg, COLORREF fg) {
         HPEN pen = CreatePen(PS_SOLID, 2, fg);
@@ -123,14 +128,14 @@ protected:
 
     void setupPoints() {
         if (_isUpsideDown) {
-            a = {_x, _y};
-            b = {_x + _size, _y};
-            c = {_x + _size / 2, _y + _size};
+            _a = {_x, _y};
+            _b = {_x + _size, _y};
+            _c = {_x + _size / 2, _y + _size};
         }
         else {
-            a = {_x + _size / 2, _y};
-            b = {_x, _y + _size };
-            c = {_x + _size, _y + _size};
+            _a = {_x + _size / 2, _y};
+            _b = {_x, _y + _size };
+            _c = {_x + _size, _y + _size};
         }
     }
 };
@@ -142,7 +147,7 @@ public:
             center->getY() != main->getY() + (main->getSize() / 2) ||
             main->getSize() == center->getSize() / 2 ||
             !center->isUpsideDown()) {
-            throw FigureException("Wrong center triangle");
+            throw Figure::FigureException("Wrong center triangle");
         }
     }
 
