@@ -28,17 +28,13 @@ int main() {
         }
 
         Sleep(1000);
-        for (int i = 0; i < 100; i++) {
-            extra->moveTo(x + 200, y + 50);
-        }
 
-        Sleep(1000);
         for (int i = 0; i < 100; i++) {
-            repo.hideAll();
+            extra->moveTo(x + 2000, y + 50);
         }
-
-        while (true);
-    } catch (FigureException& ex) {
+    } catch (Figure::FigureException& ex) {
         cout << ex.message;
     }
+
+    while (true);
 }

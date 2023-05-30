@@ -6,16 +6,7 @@ const COLORREF FG = RGB(255, 255, 255);
 
 using namespace std;
 
-
-
-class IFigure {
-public:
-    virtual void moveTo(int x, int y) = 0;
-    virtual void show() = 0;
-    virtual void hide() = 0;
-};
-
-class Figure : public IFigure {
+class Figure {
 public:
     class FigureException : std::exception {
     public:
@@ -33,6 +24,26 @@ public:
         }
 
         GetWindowRect(_hwnd, &_rect);
+
+        drawException(x, y);
+    }
+
+    Figure() {
+        _x = 0;
+        _y = 0;
+        _border = FG;
+        _fill = BG;
+
+        if ((_hwnd = GetConsoleWindow()) == nullptr) {
+            throw FigureException("Console window not found");
+        }
+        if ((_hdc = GetDC(_hwnd)) == nullptr) {
+            throw FigureException("Context not found");
+        }
+
+        GetWindowRect(_hwnd, &_rect);
+
+        drawException(_x, _y);
     }
 
     virtual void show() = 0;
@@ -43,13 +54,10 @@ public:
     }
 
     virtual void moveTo(int x, int y) {
-        int windowWidth = _rect.right - _rect.left;
-        int windowHeight = _rect.bottom - _rect.top;
-        if (x > windowWidth|| x < 0 || y > windowHeight || y < 0)
-            throw FigureException("Figure is out of border");
-        show();
-        _x = x, _y = y;
+        drawException(x, y);
         hide();
+        _x = x, _y = y;
+        show();
     }
 
     int getX() {
@@ -67,6 +75,13 @@ protected:
     RECT _rect;
     COLORREF _border;
     COLORREF _fill;
+
+    void drawException(int x, int y) {
+        int windowWidth = _rect.right - _rect.left;
+        int windowHeight = _rect.bottom - _rect.top;
+        if (x > windowWidth|| x < 0 || y > windowHeight || y < 0)
+            throw FigureException("Figure is out of border");
+    }
 };
 
 class Triangle : public Figure {
@@ -74,7 +89,16 @@ public:
     Triangle(int x, int y, int size, bool isUpsideDown = false,
              COLORREF border = FG,
              COLORREF fill = BG) : Figure(x, y, border, fill), _size(size), _isUpsideDown(isUpsideDown) {
-        setupPoints();
+        setupPoints(x, y);
+    }
+
+    Triangle() {
+        _x = 0;
+        _y = 0;
+        _size = 100;
+        _isUpsideDown = false;
+
+        setupPoints(_x, _y);
     }
 
     void show() override {
@@ -82,23 +106,12 @@ public:
     }
 
     void hide() override {
-        /*RECT* erase = new RECT;
-        erase->top = _y;
-        erase->left = _x;
-        erase->right = _x + _size;
-        erase->bottom = _y + _size;
-
-        InvalidateRect(_hwnd, erase, false);*/
-
         drawPoints(_a, _b, _c, BG, BG);
     }
 
     void moveTo(int x, int y) override {
-        int windowWidth = _rect.right - _rect.left;
-        int windowHeight = _rect.bottom - _rect.top;
-        if (x > windowWidth || x < 0 || y > windowHeight || y < 0)
-            throw FigureException("Figure is out of border");
-        setupPoints();
+        drawException(x, y);
+        setupPoints(x, y);
         Figure::moveTo(x, y);
     }
 
@@ -126,21 +139,21 @@ protected:
         DeleteObject(brush);
     }
 
-    void setupPoints() {
+    void setupPoints(int x, int y) {
         if (_isUpsideDown) {
-            _a = {_x, _y};
-            _b = {_x + _size, _y};
-            _c = {_x + _size / 2, _y + _size};
+            _a = {x, y};
+            _b = {x + _size, y};
+            _c = {x + _size / 2, y + _size};
         }
         else {
-            _a = {_x + _size / 2, _y};
-            _b = {_x, _y + _size };
-            _c = {_x + _size, _y + _size};
+            _a = {x + _size / 2, y};
+            _b = {x, y + _size };
+            _c = {x + _size, y + _size};
         }
     }
 };
 
-class Serpinsky : public IFigure {
+class Serpinsky : public Figure {
 public:
     Serpinsky(Triangle* main, Triangle* center) : _main(main), _center(center) {
         if (center->getX() != main->getX() + (main->getSize() / 4) ||
