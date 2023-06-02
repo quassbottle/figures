@@ -14,23 +14,31 @@ int main() {
     int y = 100;
     int size = 100;
     try {
-        auto main = new Triangle(x, y, size);
-        auto center = new Triangle(x + (size / 4), y + (size / 2), size / 2, true);
+        auto main = new Triangle(x, y, size, false);
+        auto center = new Triangle(x, y + size, size / 2, true);
+        auto extra = new Triangle(x + 300, y, size * 2, false, RGB(255, 0, 0), RGB(128, 0, 0));
 
-        auto extra = new Triangle(x + 150, y, size * 2, false, RGB(255, 0, 0), RGB(128, 0, 0));
         auto complex = new Serpinsky(main, center);
 
+        //repo.push(center);
+        //repo.push(main);
         repo.push(complex);
         repo.push(extra);
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
             repo.showAll();
         }
 
         Sleep(1000);
 
-        for (int i = 0; i < 100; i++) {
-            extra->moveTo(x + 2000, y + 50);
+        for (int i = 0; i < 1000; i++) {
+            extra->hide();
+        }
+
+        Sleep(1000);
+
+        for (int i = 0; i < 1000; i++) {
+            extra->moveTo(x + 500, y + 50);
         }
     } catch (Figure::FigureException& ex) {
         cout << ex.message;

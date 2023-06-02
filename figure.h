@@ -60,11 +60,11 @@ public:
         show();
     }
 
-    int getX() {
+    int getX() const {
         return _x;
     }
 
-    int getY() {
+    int getY() const {
         return _y;
     }
 
@@ -72,11 +72,11 @@ protected:
     int _x, _y;
     HWND _hwnd;
     HDC _hdc;
-    RECT _rect;
+    RECT _rect{};
     COLORREF _border;
     COLORREF _fill;
 
-    void drawException(int x, int y) {
+    void drawException(int x, int y) const {
         int windowWidth = _rect.right - _rect.left;
         int windowHeight = _rect.bottom - _rect.top;
         if (x > windowWidth|| x < 0 || y > windowHeight || y < 0)
@@ -110,23 +110,24 @@ public:
     }
 
     void moveTo(int x, int y) override {
-        drawException(x, y);
+        hide();
+        _x = x, _y = y;
         setupPoints(x, y);
-        Figure::moveTo(x, y);
+        show();
     }
 
-    int getSize() {
+    int getSize() const {
         return _size;
     }
 
-    bool isUpsideDown() {
+    bool isUpsideDown() const {
         return _isUpsideDown;
     }
 
 protected:
     int _size;
     bool _isUpsideDown;
-    POINT _a, _b, _c;
+    POINT _a{}, _b{}, _c{};
 
     void drawPoints(POINT a, POINT b, POINT c, COLORREF bg, COLORREF fg) {
         HPEN pen = CreatePen(PS_SOLID, 2, fg);
@@ -140,7 +141,7 @@ protected:
     }
 
     void setupPoints(int x, int y) {
-        if (_isUpsideDown) {
+/*        if (_isUpsideDown) {
             _a = {x, y};
             _b = {x + _size, y};
             _c = {x + _size / 2, y + _size};
@@ -149,32 +150,44 @@ protected:
             _a = {x + _size / 2, y};
             _b = {x, y + _size };
             _c = {x + _size, y + _size};
+        }*/
+        _a = {_x, _y};
+        if (_isUpsideDown) {
+            _b = {x - _size / 2, y - _size};
+            _c = {x + _size / 2, y - _size};
         }
+        else {
+            _b = {x - _size / 2, y + _size};
+            _c = {x + _size / 2, y + _size};
+        }
+        drawException(_a.x, _a.y);
+        drawException(_b.x, _b.y);
+        drawException(_c.x, _c.y);
     }
 };
 
 class Serpinsky : public Figure {
 public:
     Serpinsky(Triangle* main, Triangle* center) : _main(main), _center(center) {
-        if (center->getX() != main->getX() + (main->getSize() / 4) ||
-            center->getY() != main->getY() + (main->getSize() / 2) ||
-            main->getSize() == center->getSize() / 2 ||
-            !center->isUpsideDown()) {
+        if (center->getX() != main->getX() ||
+            center->getY() != main->getY() + main->getSize() ||
+            center->getSize() != main->getSize() / 2 ||
+            !center->isUpsideDown() || main->isUpsideDown()) {
             throw Figure::FigureException("Wrong center triangle");
         }
     }
 
-    void show() {
+    void show() override {
         _main->show();
         _center->show();
     }
 
-    void hide() {
+    void hide() override {
         _main->hide();
         _center->hide();
     }
 
-    void moveTo(int x, int y) {
+    void moveTo(int x, int y) override {
         _main->moveTo(x, y);
         _center->moveTo(x + (_main->getSize() / 4), y + (_main->getSize() / 2));
     }
